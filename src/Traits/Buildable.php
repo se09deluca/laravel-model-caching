@@ -1,5 +1,8 @@
-<?php namespace GeneaLabs\LaravelModelCaching\Traits;
+<?php
 
+namespace GeneaLabs\LaravelModelCaching\Traits;
+
+use Illuminate\Container\Container;
 use Illuminate\Pagination\Paginator;
 
 /**
@@ -170,7 +173,7 @@ trait Buildable
         if (is_array($page)) {
             $page = $this->recursiveImplodeWithKey($page);
         }
-        
+
         $columns = collect($columns)->toArray();
         $keyDifferentiator = "-paginate_by_{$perPage}_{$pageName}_{$page}";
 
@@ -303,9 +306,15 @@ trait Buildable
             $this->checkCooldownAndRemoveIfExpired($this->getModel());
         }
 
+
+        $cacheTTL = Container::getInstance()
+            ->make("config")
+            ->get("laravel-model-caching.cache-ttl");
+
         return $this->cache($cacheTags)
-            ->rememberForever(
+            ->remember(
                 $hashedCacheKey,
+                $cacheTTL,
                 function () use ($arguments, $cacheKey, $method) {
                     return [
                         "key" => $cacheKey,
